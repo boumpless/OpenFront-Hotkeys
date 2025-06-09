@@ -4,7 +4,7 @@ This AutoHotkey script helps you play [openfront.io](https://openfront.io) more 
 
 **Work with all screen resolutions !**
 
-![Alt text](openfront.gif) /
+![Alt text](assets/openfront.gif) /
 
 
 ## ✅ Installation Instructions
@@ -18,6 +18,12 @@ This AutoHotkey script helps you play [openfront.io](https://openfront.io) more 
 ## ⚙️ Configuration
 
 - **Calibrate** mouse position and ui size with `m` hotkey and follow the instructions.
+
+&nbsp;![Alt text](assets/calibration1.jpg)
+&nbsp;*click 1 then 2*
+
+&nbsp;![Alt text](assets/calibration2.jpg)
+&nbsp;*ctrl + click anywhere to open build menu, click 3 then 4, enter the number of elements of first row*
 
 - Increase or decreast delay based on lag with `o` and `p` hotkeys.
 
