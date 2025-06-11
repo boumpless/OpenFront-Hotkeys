@@ -35,7 +35,7 @@ navalInvasionKey := IniRead(configFile, "Hotkeys", "navalInvasion", "x")
 allyBetrayKey := IniRead(configFile, "Hotkeys", "allyBetray", "v")
 playerInfoKey := IniRead(configFile, "Hotkeys", "playerInfo", "b")
 ; Settings keys
-calibrateMousePositionKey := IniRead(configFile, "Hotkeys", "calibrateMousePositionKey", "l")
+calibrateMousePositionKey := IniRead(configFile, "Hotkeys", "calibrateMousePosition", "m")
 increaseDelayKey := IniRead(configFile, "Hotkeys", "increaseDelay", "o")
 decreaseDelayKey := IniRead(configFile, "Hotkeys", "decreaseDelay", "p")
 
