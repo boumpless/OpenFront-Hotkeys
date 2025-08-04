@@ -1,3 +1,6 @@
+# ADDED MENU TO SELECT WHAT IS PLACABLE IN-GAME
+
+
 # 🌍 AutoHotkey Script for openfront.io
 
 This AutoHotkey script helps you play [openfront.io](https://openfront.io) more efficiently by assigning keyboard shortcuts to common game actions.
