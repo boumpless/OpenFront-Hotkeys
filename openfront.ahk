@@ -1,4 +1,4 @@
-﻿; To edit settings and hotkeys other than Exit Pause/Unpause, edit openfront-config.ini
+; To edit settings and hotkeys other than Exit Pause/Unpause, edit openfront-config.ini
 #Requires AutoHotkey v2.0
 #SingleInstance
 
@@ -25,6 +25,7 @@ portKey := IniRead(configFile, "Hotkeys", "port", "g")
 defensePostKey := IniRead(configFile, "Hotkeys", "defensePost", "h")
 missileSiloKey := IniRead(configFile, "Hotkeys", "missileSilo", "j")
 sAMLauncherKey := IniRead(configFile, "Hotkeys", "sAMLauncher", "k")
+trainKey := IniRead(configFile, "Hotkeys", "train", "l")
 ; Send keys
 warshipKey := IniRead(configFile, "Hotkeys", "warship", "r")
 atomBombKey := IniRead(configFile, "Hotkeys", "atomBomb", "t")
@@ -46,8 +47,34 @@ buttonSizeY := IniRead(configFile, "Settings", "buttonSizeY", "150")
 maxNbButtonsBuildRow := IniRead(configFile, "Settings", "maxNbButtonsBuildRow", "6")
 browserMenuSize := IniRead(configFile, "Settings", "browserMenuSize", "100")
 
-totalNbBuildButtons := 9
-buttonSize := 170
+; Liste des boutons possibles
+buttonList := ["Atom Bomb", "MIRV", "Hydrogen Bomb", "Warship", "Port", "Missile Silo", "SAM Launcher", "Defense Post", "City", "Train"]
+
+; Créer la GUI pour sélectionner les boutons présents
+SelectButtonsGui() {
+    global buttonList, selectedButtons
+    selectedButtons := []
+    MyGui := Gui("+AlwaysOnTop", "Sélection des boutons présents")
+    for index, button in buttonList {
+        MyGui.Add("Checkbox", "vChk" index, button)
+    }
+    MyGui.Add("Button", "Default", "OK").OnEvent("Click", (*) => SubmitSelections(MyGui))
+    MyGui.Show()
+}
+
+SubmitSelections(guiObj) {
+    global selectedButtons, buttonList
+    for index, button in buttonList
+        if guiObj["Chk" index].Value
+            selectedButtons.Push(button)
+    guiObj.Destroy()
+}
+
+; Appeler la GUI au démarrage
+SelectButtonsGui()
+; Attendre que la GUI soit fermée
+while !selectedButtons
+    Sleep 100
 
 IncreaseDelay() {
     global baseDelay
@@ -85,7 +112,7 @@ CalibrateMousePosition() {
     second := WaitForClick()
     browserMenuSize := Abs(second.y - first.y)
 
-    MsgBox "1. Click on `"OK`"`n2. Ctrl + click anywhere to open Build menu`n3. Remember how many buttons there are on the FIRST row (max 9)`n4. Click on the TOP LEFT corner of Atom Bomb button (1st button)`n5. Click on BOTTOM LEFT corner of MIRV button (2nd button)",
+    MsgBox "1. Click on `"OK`"`n2. Ctrl + click anywhere to open Build menu`n3. Remember how many buttons there are on the FIRST row (max 10)`n4. Click on the TOP LEFT corner of Atom Bomb button (1st button)`n5. Click on BOTTOM LEFT corner of Train button (2nd button)",
         "Settings - Buttons calibration", "OK"
 
     first := WaitForClick()
@@ -93,11 +120,11 @@ CalibrateMousePosition() {
     buttonSizeX := Abs(second.x - first.x)
     buttonSizeY := Abs(second.y - first.y)
 
-    resultNbButtons := InputBox("How many buttons on top row of build menu ? (max 9)", "Settings - Buttons calibration",
+    resultNbButtons := InputBox("How many buttons on top row of build menu ? (max 10)", "Settings - Buttons calibration",
         "")
     userNbButtons := resultNbButtons.Value
-    if !IsInteger(userNbButtons) || userNbButtons < 0 || userNbButtons > 9 {
-        MsgBox("please enter the numbers of buttosn in the top row (1 - 9)", "Error", "Iconx")
+    if !IsInteger(userNbButtons) || userNbButtons < 0 || userNbButtons > 10 {
+        MsgBox("please enter the number of buttons in the top row (1 - 10)", "Error", "Iconx")
         return
     }
     maxNbButtonsBuildRow := userNbButtons
@@ -111,7 +138,6 @@ CalibrateMousePosition() {
     myGui.Add("Text", "Center vCenter", "Settings saved in openfront-config.ini")
     myGui.Show("xCenter yCenter NoActivate AutoSize")
     SetTimer(() => myGui.Destroy(), 2000)
-
 }
 
 WaitForClick() {
@@ -126,23 +152,33 @@ WaitForClick() {
     }
 }
 
-GetButtonCoords(buildPosition) {
-    global maxNbButtonsBuildRow
-    global buttonSizeX
-    global buttonSizeY
-    global browserMenuSize
+GetButtonCoords(buttonName) {
+    global selectedButtons, maxNbButtonsBuildRow, buttonSizeX, buttonSizeY, browserMenuSize
+
+    ; Trouver la position du bouton dans la liste sélectionnée
+    buildPosition := 0
+    for index, button in selectedButtons {
+        if button = buttonName {
+            buildPosition := index
+            break
+        }
+    }
+    if buildPosition = 0 {
+        MsgBox("Bouton non trouvé : " buttonName)
+        return [0, 0]
+    }
 
     row := (buildPosition - 1) // maxNbButtonsBuildRow
     pos := Mod((buildPosition - 1), maxNbButtonsBuildRow)
 
-    fullRows := totalNbBuildButtons // maxNbButtonsBuildRow
-    remaining := Mod(totalNbBuildButtons, maxNbButtonsBuildRow)
+    fullRows := selectedButtons.Length // maxNbButtonsBuildRow
+    remaining := Mod(selectedButtons.Length, maxNbButtonsBuildRow)
     isLastRow := (row = fullRows) && (remaining != 0)
     elementsInRow := isLastRow ? remaining : maxNbButtonsBuildRow
 
     centerOffset := (elementsInRow - 1) / 2
 
-    totalRows := Ceil(totalNbBuildButtons / maxNbButtonsBuildRow)
+    totalRows := Ceil(selectedButtons.Length / maxNbButtonsBuildRow)
     rowCenterOffset := (totalRows - 1) / 2
 
     WinGetPos(&x, &y, &w, &h, "A")  ; "A" = active window
@@ -155,8 +191,13 @@ GetButtonCoords(buildPosition) {
     return [buttonX, buttonY]
 }
 
-Build(x, y) {
+Build(buttonName) {
     global baseDelay
+    buttonCoords := GetButtonCoords(buttonName)
+    buttonX := buttonCoords[1]
+    buttonY := buttonCoords[2]
+    if buttonX = 0 && buttonY = 0
+        return
     BlockInput true
     MouseGetPos &x0, &y0
 
@@ -164,84 +205,53 @@ Build(x, y) {
     Click 'left'
     Send('{Ctrl up}')
 
-    MouseMove x, y, 0
+    MouseMove buttonX, buttonY, 0
     Sleep baseDelay
 
     Click 'left'
 
     MouseMove x0, y0, 0
-    BlockInput true
+    BlockInput false
 }
 
 BuildCity() {
-    buildPosition := 9
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("City")
 }
 
 BuildDefensePost() {
-    buildPosition := 8
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Defense Post")
 }
+
 BuildPort() {
-    buildPosition := 5
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Port")
 }
 
 BuildMissileSilo() {
-    buildPosition := 6
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Missile Silo")
 }
 
 BuildSAMLauncher() {
-    buildPosition := 7
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("SAM Launcher")
 }
 
 BuildWarship() {
-    buildPosition := 4
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Warship")
+}
+
+BuildTrain() {
+    Build("Train")
 }
 
 SendAtomBomb() {
-    buildPosition := 1
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Atom Bomb")
 }
 
 SendHydrogenBomb() {
-    buildPosition := 3
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("Hydrogen Bomb")
 }
 
 SendMIRV() {
-    buildPosition := 2
-    buttonCoords := GetButtonCoords(buildPosition)
-    buttonX := buttonCoords[1]
-    buttonY := buttonCoords[2]
-    Build(buttonX, buttonY)
+    Build("MIRV")
 }
 
 ; --- ACTIONS ---
@@ -279,6 +289,7 @@ Hotkey(portKey, (*) => BuildPort())
 Hotkey(defensePostKey, (*) => BuildDefensePost())
 Hotkey(missileSiloKey, (*) => BuildMissileSilo())
 Hotkey(sAMLauncherKey, (*) => BuildSAMLauncher())
+Hotkey(trainKey, (*) => BuildTrain())
 Hotkey(warshipKey, (*) => BuildWarship())
 Hotkey(atomBombKey, (*) => SendAtomBomb())
 Hotkey(hydrogenBombKey, (*) => SendHydrogenBomb())
