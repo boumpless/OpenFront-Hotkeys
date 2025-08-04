@@ -61,6 +61,8 @@ This AutoHotkey script helps you play [openfront.io](https://openfront.io) more 
 | 💣 Launch atom bomb     | `t` |
 | ☢️ Launch hydrogen bomb | `y` |
 | 💀 Launch MIRV          | `u` |
+| 🏭 Build factory        | `l` |
+
 
 
 | 🧭 Action                   | Key |
